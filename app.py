@@ -120,6 +120,7 @@ st.title("Streamlist Sharing")
 st.header("Aggiungi o Aggiorna Dipendenti")
 giorni_settimana = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
 
+# Gestisci l'aggiunta dei dipendenti utilizzando session_state per mantenere i valori persistenti
 for i in range(st.session_state['num_dipendenti']):
     with st.form(key=f'aggiungi_dipendente_{i}'):
         nome = st.text_input(f"Nome Dipendente {i + 1}", value=st.session_state['data'].iloc[i]['Nome Dipendente'] if i < len(st.session_state['data']) else "")
