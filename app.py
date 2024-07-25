@@ -4,38 +4,42 @@ import numpy as np
 
 class StreamlistSharing:
     def __init__(self):
-        self.data = pd.DataFrame(columns=['Nome Dipendente', 'Ore di Lavoro', 'Giorni Liberi'])
-        self.orario_apertura = ""
-        self.giorni_apertura = ""
-        self.scheduling = None
+        if 'data' not in st.session_state:
+            st.session_state['data'] = pd.DataFrame(columns=['Nome Dipendente', 'Ore di Lavoro', 'Giorni Liberi'])
+        if 'orario_apertura' not in st.session_state:
+            st.session_state['orario_apertura'] = ""
+        if 'giorni_apertura' not in st.session_state:
+            st.session_state['giorni_apertura'] = ""
+        if 'scheduling' not in st.session_state:
+            st.session_state['scheduling'] = None
 
     def aggiungi_dipendente(self, nome, ore, giorni_liberi):
         new_row = pd.DataFrame({'Nome Dipendente': [nome], 'Ore di Lavoro': [ore], 'Giorni Liberi': [giorni_liberi]})
-        self.data = pd.concat([self.data, new_row], ignore_index=True)
+        st.session_state['data'] = pd.concat([st.session_state['data'], new_row], ignore_index=True)
 
     def mostra_streamlist(self):
-        st.write(self.data)
+        st.write(st.session_state['data'])
 
     def totale_dipendenti(self):
-        return len(self.data)
+        return len(st.session_state['data'])
 
     def totale_ore_lavoro(self):
-        return self.data['Ore di Lavoro'].sum()
+        return st.session_state['data']['Ore di Lavoro'].sum()
 
     def imposta_orario_apertura(self, orario):
-        self.orario_apertura = orario
+        st.session_state['orario_apertura'] = orario
 
     def imposta_giorni_apertura(self, giorni):
-        self.giorni_apertura = giorni
+        st.session_state['giorni_apertura'] = giorni
 
     def mostra_info_negizio(self):
-        st.write(f"Orario di apertura: {self.orario_apertura}")
-        st.write(f"Giorni di apertura: {self.giorni_apertura}")
+        st.write(f"Orario di apertura: {st.session_state['orario_apertura']}")
+        st.write(f"Giorni di apertura: {st.session_state['giorni_apertura']}")
 
     def crea_scheduling(self):
         # Definire i parametri di base
-        giorni = self.giorni_apertura.split('-')
-        orario_inizio, orario_fine = map(int, self.orario_apertura.split('-'))
+        giorni = st.session_state['giorni_apertura'].split('-')
+        orario_inizio, orario_fine = map(int, st.session_state['orario_apertura'].split('-'))
         ore_lavoro_settimanali = 40
 
         # Calcolare le ore di apertura giornaliere
@@ -43,14 +47,14 @@ class StreamlistSharing:
         ore_apertura_settimanale = ore_apertura_giornaliera * len(giorni)
 
         # Calcolare il numero di dipendenti necessari per coprire l'intera settimana
-        numero_dipendenti = len(self.data)
+        numero_dipendenti = len(st.session_state['data'])
 
         # Creare uno schedule vuoto
         schedule = pd.DataFrame(index=giorni, columns=[f'{orario_inizio + i}:00' for i in range(ore_apertura_giornaliera)])
         schedule[:] = np.nan
 
         # Assegnare le ore ai dipendenti
-        for idx, row in self.data.iterrows():
+        for idx, row in st.session_state['data'].iterrows():
             nome = row['Nome Dipendente']
             ore_rimanenti = ore_lavoro_settimanali
             giorni_liberi = row['Giorni Liberi'].split(',')
@@ -61,10 +65,10 @@ class StreamlistSharing:
                             schedule.at[giorno, f'{ora}:00'] = nome
                             ore_rimanenti -= 1
 
-        self.scheduling = schedule
+        st.session_state['scheduling'] = schedule
 
     def mostra_scheduling(self):
-        st.write(self.scheduling)
+        st.write(st.session_state['scheduling'])
 
 # Creazione dell'oggetto StreamlistSharing
 streamlist = StreamlistSharing()
