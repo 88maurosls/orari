@@ -10,12 +10,12 @@ class StreamlistSharing:
             st.session_state['orario_apertura'] = ""
         if 'giorni_apertura' not in st.session_state:
             st.session_state['giorni_apertura'] = ""
-        if 'orari_di_punta' not in st.session_state:
-            st.session_state['orari_di_punta'] = ""
         if 'scheduling' not in st.session_state:
             st.session_state['scheduling'] = None
         if 'num_dipendenti' not in st.session_state:
             st.session_state['num_dipendenti'] = 6  # Numero di dipendenti iniziali di default
+        if 'fasce_orarie' not in st.session_state:
+            st.session_state['fasce_orarie'] = pd.DataFrame(columns=['Inizio', 'Fine', 'Minimo Dipendenti'])
 
     def aggiungi_o_aggiorna_dipendente(self, idx, nome, ore, giorni_liberi):
         if idx < len(st.session_state['data']):
@@ -39,13 +39,14 @@ class StreamlistSharing:
     def imposta_giorni_apertura(self, giorni):
         st.session_state['giorni_apertura'] = giorni
 
-    def imposta_orari_di_punta(self, orari):
-        st.session_state['orari_di_punta'] = orari
+    def imposta_fasce_orarie(self, fasce):
+        st.session_state['fasce_orarie'] = pd.DataFrame(fasce)
 
     def mostra_info_negizio(self):
         st.write(f"Orario di apertura: {st.session_state['orario_apertura']}")
         st.write(f"Giorni di apertura: {st.session_state['giorni_apertura']}")
-        st.write(f"Orari di punta: {st.session_state['orari_di_punta']}")
+        st.write("Fasce orarie e minimo dipendenti:")
+        st.write(st.session_state['fasce_orarie'])
 
     def crea_scheduling(self):
         # Definire i parametri di base
@@ -64,17 +65,22 @@ class StreamlistSharing:
         schedule = pd.DataFrame(index=giorni, columns=[f'{orario_inizio + i}:00' for i in range(ore_apertura_giornaliera)])
         schedule[:] = np.nan
 
-        # Assegnare le ore ai dipendenti
+        # Assegnare le ore ai dipendenti rispettando il minimo per fascia oraria
+        fasce_orarie = st.session_state['fasce_orarie']
         for idx, row in st.session_state['data'].iterrows():
             nome = row['Nome Dipendente']
             ore_rimanenti = ore_lavoro_settimanali
             giorni_liberi = row['Giorni Liberi'].split(',')
             for giorno in giorni:
                 if giorno not in giorni_liberi:
-                    for ora in range(orario_inizio, orario_fine):
-                        if ore_rimanenti > 0 and pd.isna(schedule.at[giorno, f'{ora}:00']):
-                            schedule.at[giorno, f'{ora}:00'] = nome
-                            ore_rimanenti -= 1
+                    for _, fascia in fasce_orarie.iterrows():
+                        inizio, fine, minimo_dipendenti = fascia['Inizio'], fascia['Fine'], fascia['Minimo Dipendenti']
+                        for ora in range(inizio, fine):
+                            if ore_rimanenti > 0 and pd.isna(schedule.at[giorno, f'{ora}:00']):
+                                dipendenti_presenti = schedule.loc[giorno, f'{ora}:00'].count()
+                                if dipendenti_presenti < minimo_dipendenti:
+                                    schedule.at[giorno, f'{ora}:00'] = nome
+                                    ore_rimanenti -= 1
 
         st.session_state['scheduling'] = schedule
 
@@ -117,14 +123,25 @@ st.header("Imposta Orario e Giorni di Apertura")
 with st.form(key='imposta_orario_giorni'):
     orario_apertura = st.text_input("Orario di Apertura (es. 10-24)", value=st.session_state['orario_apertura'])
     giorni_apertura = st.text_input("Giorni di Apertura (es. Lun-Mar-Mer-Gio-Ven-Sab-Dom)", value=st.session_state['giorni_apertura'])
-    orari_di_punta = st.text_input("Orari di Punta (es. 22-24)", value=st.session_state['orari_di_punta'])
-    submit_button = st.form_submit_button(label='Imposta Orario, Giorni di Apertura e Orari di Punta')
+    
+    fasce_orarie = []
+    for i in range(3):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            inizio = st.number_input(f'Inizio Fascia {i+1}', min_value=0, max_value=24, value=10 if i == 0 else (16 if i == 1 else 22))
+        with col2:
+            fine = st.number_input(f'Fine Fascia {i+1}', min_value=0, max_value=24, value=16 if i == 0 else (22 if i == 1 else 24))
+        with col3:
+            minimo_dipendenti = st.number_input(f'Minimo Dipendenti Fascia {i+1}', min_value=0, max_value=20, value=1)
+        fasce_orarie.append({'Inizio': inizio, 'Fine': fine, 'Minimo Dipendenti': minimo_dipendenti})
+    
+    submit_button = st.form_submit_button(label='Imposta Orario e Giorni di Apertura')
 
     if submit_button:
         streamlist.imposta_orario_apertura(orario_apertura)
         streamlist.imposta_giorni_apertura(giorni_apertura)
-        streamlist.imposta_orari_di_punta(orari_di_punta)
-        st.success("Orario, giorni di apertura e orari di punta impostati")
+        streamlist.imposta_fasce_orarie(fasce_orarie)
+        st.success("Orario e giorni di apertura impostati")
 
 # Mostra streamlist attuale
 st.header("Streamlist Attuale")
