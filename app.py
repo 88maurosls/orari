@@ -91,11 +91,13 @@ class StreamlistSharing:
                         st.warning(f"Non ci sono abbastanza dipendenti per coprire la fascia oraria {inizio}-{fine} di {giorno}")
                         for idx, row in st.session_state['data'].iterrows():
                             nome = row['Nome Dipendente']
-                            ore_rimanenti = row['Ore di Lavoro']
                             giorni_liberi = row['Giorni Liberi'].split(',')
                             if giorno not in giorni_liberi:
                                 if pd.isna(schedule.at[giorno, f'{ora}:00']) or nome not in schedule.at[giorno, f'{ora}:00']:
-                                    schedule.at[giorno, f'{ora}:00'] = f'{schedule.at[giorno, f'{ora}:00']}, {nome}' if pd.notna(schedule.at[giorno, f'{ora}:00']) else nome
+                                    if pd.notna(schedule.at[giorno, f'{ora}:00']):
+                                        schedule.at[giorno, f'{ora}:00'] += f', {nome}'
+                                    else:
+                                        schedule.at[giorno, f'{ora}:00'] = nome
                                     st.session_state['data'].at[idx, 'Ore Extra'] += 1
                                     dipendenti_assegnati += 1
                                 if dipendenti_assegnati >= minimo_dipendenti:
