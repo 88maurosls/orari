@@ -29,7 +29,7 @@ with st.form(key='aggiungi_dipendente'):
     ore = st.number_input("Ore di Lavoro", min_value=0, max_value=100, step=1)
     submit_button = st.form_submit_button(label='Aggiungi Dipendente')
 
-    if submit_button:
+    if submit_button and nome:
         streamlist.aggiungi_dipendente(nome, ore)
         st.success(f"Dipendente {nome} aggiunto con {ore} ore di lavoro")
 
