@@ -5,7 +5,7 @@ import numpy as np
 class StreamlistSharing:
     def __init__(self):
         if 'data' not in st.session_state:
-            st.session_state['data'] = pd.DataFrame(columns=['Nome Dipendente', 'Ore di Lavoro', 'Giorni Liberi'])
+            st.session_state['data'] = pd.DataFrame(columns=['Nome Dipendente', 'Ore di Lavoro', 'Giorni Liberi', 'Ore Extra'])
         if 'orario_apertura' not in st.session_state:
             st.session_state['orario_apertura'] = ""
         if 'giorni_apertura' not in st.session_state:
@@ -19,9 +19,9 @@ class StreamlistSharing:
 
     def aggiungi_o_aggiorna_dipendente(self, idx, nome, ore, giorni_liberi):
         if idx < len(st.session_state['data']):
-            st.session_state['data'].loc[idx] = [nome, ore, giorni_liberi]
+            st.session_state['data'].loc[idx] = [nome, ore, giorni_liberi, 0]
         else:
-            new_row = pd.DataFrame({'Nome Dipendente': [nome], 'Ore di Lavoro': [ore], 'Giorni Liberi': [giorni_liberi]})
+            new_row = pd.DataFrame({'Nome Dipendente': [nome], 'Ore di Lavoro': [ore], 'Giorni Liberi': [giorni_liberi], 'Ore Extra': [0]})
             st.session_state['data'] = pd.concat([st.session_state['data'], new_row], ignore_index=True)
 
     def mostra_streamlist(self):
@@ -89,11 +89,24 @@ class StreamlistSharing:
                                 break
                     if dipendenti_assegnati < minimo_dipendenti:
                         st.warning(f"Non ci sono abbastanza dipendenti per coprire la fascia oraria {inizio}-{fine} di {giorno}")
+                        for idx, row in st.session_state['data'].iterrows():
+                            nome = row['Nome Dipendente']
+                            ore_rimanenti = row['Ore di Lavoro']
+                            giorni_liberi = row['Giorni Liberi'].split(',')
+                            if giorno not in giorni_liberi:
+                                if pd.isna(schedule.at[giorno, f'{ora}:00']) or nome not in schedule.at[giorno, f'{ora}:00']:
+                                    schedule.at[giorno, f'{ora}:00'] = f'{schedule.at[giorno, f'{ora}:00']}, {nome}' if pd.notna(schedule.at[giorno, f'{ora}:00']) else nome
+                                    st.session_state['data'].at[idx, 'Ore Extra'] += 1
+                                    dipendenti_assegnati += 1
+                                if dipendenti_assegnati >= minimo_dipendenti:
+                                    break
 
         st.session_state['scheduling'] = schedule
 
     def mostra_scheduling(self):
         st.write(st.session_state['scheduling'])
+        st.write("Ore Extra Settimanali per Dipendente:")
+        st.write(st.session_state['data'][['Nome Dipendente', 'Ore Extra']])
 
 # Creazione dell'oggetto StreamlistSharing
 streamlist = StreamlistSharing()
