@@ -67,20 +67,21 @@ class StreamlistSharing:
 
         # Assegnare le ore ai dipendenti rispettando il minimo per fascia oraria
         fasce_orarie = st.session_state['fasce_orarie']
-        for idx, row in st.session_state['data'].iterrows():
-            nome = row['Nome Dipendente']
-            ore_rimanenti = ore_lavoro_settimanali
-            giorni_liberi = row['Giorni Liberi'].split(',')
-            for giorno in giorni:
-                if giorno not in giorni_liberi:
-                    for _, fascia in fasce_orarie.iterrows():
-                        inizio, fine, minimo_dipendenti = fascia['Inizio'], fascia['Fine'], fascia['Minimo Dipendenti']
-                        for ora in range(inizio, fine):
-                            if ore_rimanenti > 0 and (pd.isna(schedule.at[giorno, f'{ora}:00']) or schedule.at[giorno, f'{ora}:00'] == ''):
-                                dipendenti_presenti = schedule.loc[giorno, f'{ora}:00'].count() if pd.notna(schedule.loc[giorno, f'{ora}:00']) else 0
-                                if dipendenti_presenti < minimo_dipendenti:
-                                    schedule.at[giorno, f'{ora}:00'] = nome
-                                    ore_rimanenti -= 1
+        for giorno in giorni:
+            for _, fascia in fasce_orarie.iterrows():
+                inizio, fine, minimo_dipendenti = fascia['Inizio'], fascia['Fine'], fascia['Minimo Dipendenti']
+                for ora in range(inizio, fine):
+                    dipendenti_assegnati = 0
+                    for idx, row in st.session_state['data'].iterrows():
+                        nome = row['Nome Dipendente']
+                        ore_rimanenti = row['Ore di Lavoro']
+                        giorni_liberi = row['Giorni Liberi'].split(',')
+                        if giorno not in giorni_liberi and ore_rimanenti > 0 and pd.isna(schedule.at[giorno, f'{ora}:00']):
+                            schedule.at[giorno, f'{ora}:00'] = nome
+                            st.session_state['data'].at[idx, 'Ore di Lavoro'] -= 1
+                            dipendenti_assegnati += 1
+                            if dipendenti_assegnati >= minimo_dipendenti:
+                                break
 
         st.session_state['scheduling'] = schedule
 
@@ -132,7 +133,7 @@ with st.form(key='imposta_orario_giorni'):
         with col2:
             fine = st.number_input(f'Fine Fascia {i+1}', min_value=0, max_value=24, value=16 if i == 0 else (22 if i == 1 else 24))
         with col3:
-            minimo_dipendenti = st.number_input(f'Minimo Dipendenti Fascia {i+1}', min_value=0, max_value=20, value=1)
+            minimo_dipendenti = st.number_input(f'Minimo Dipendenti Fascia {i+1}', min_value=0, max_value=20, value=2)
         fasce_orarie.append({'Inizio': inizio, 'Fine': fine, 'Minimo Dipendenti': minimo_dipendenti})
     
     submit_button = st.form_submit_button(label='Imposta Orario e Giorni di Apertura')
