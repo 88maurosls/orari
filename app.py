@@ -76,8 +76,8 @@ class StreamlistSharing:
                     for _, fascia in fasce_orarie.iterrows():
                         inizio, fine, minimo_dipendenti = fascia['Inizio'], fascia['Fine'], fascia['Minimo Dipendenti']
                         for ora in range(inizio, fine):
-                            if ore_rimanenti > 0 and pd.isna(schedule.at[giorno, f'{ora}:00']):
-                                dipendenti_presenti = schedule.loc[giorno, f'{ora}:00'].count()
+                            if ore_rimanenti > 0 and (pd.isna(schedule.at[giorno, f'{ora}:00']) or schedule.at[giorno, f'{ora}:00'] == ''):
+                                dipendenti_presenti = schedule.loc[giorno, f'{ora}:00'].count() if pd.notna(schedule.loc[giorno, f'{ora}:00']) else 0
                                 if dipendenti_presenti < minimo_dipendenti:
                                     schedule.at[giorno, f'{ora}:00'] = nome
                                     ore_rimanenti -= 1
