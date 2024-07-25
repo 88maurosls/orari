@@ -12,6 +12,8 @@ class StreamlistSharing:
             st.session_state['giorni_apertura'] = ""
         if 'scheduling' not in st.session_state:
             st.session_state['scheduling'] = None
+        if 'num_dipendenti' not in st.session_state:
+            st.session_state['num_dipendenti'] = 6  # Numero di dipendenti iniziali di default
 
     def aggiungi_o_aggiorna_dipendente(self, idx, nome, ore, giorni_liberi):
         if idx < len(st.session_state['data']):
@@ -82,7 +84,8 @@ st.title("Streamlist Sharing")
 # Form per aggiungere o aggiornare dipendenti
 st.header("Aggiungi o Aggiorna Dipendenti")
 giorni_settimana = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
-for i in range(8):
+
+for i in range(st.session_state['num_dipendenti']):
     with st.form(key=f'aggiungi_dipendente_{i}'):
         nome = st.text_input(f"Nome Dipendente {i + 1}", value=st.session_state['data'].iloc[i]['Nome Dipendente'] if i < len(st.session_state['data']) else "")
         ore = st.number_input(f"Ore di Lavoro {i + 1}", min_value=0, max_value=100, step=1, value=st.session_state['data'].iloc[i]['Ore di Lavoro'] if i < len(st.session_state['data']) else 0)
@@ -98,6 +101,10 @@ for i in range(8):
         if submit_button and nome:
             streamlist.aggiungi_o_aggiorna_dipendente(i, nome, ore, giorni_liberi_str)
             st.success(f"Dati del dipendente {i + 1} salvati")
+
+# Pulsante per aggiungere più dipendenti
+if st.button('Aggiungi Dipendente'):
+    st.session_state['num_dipendenti'] += 1
 
 # Form per impostare l'orario e i giorni di apertura
 st.header("Imposta Orario e Giorni di Apertura")
