@@ -87,9 +87,11 @@ for i in range(8):
         nome = st.text_input(f"Nome Dipendente {i + 1}", value=st.session_state['data'].iloc[i]['Nome Dipendente'] if i < len(st.session_state['data']) else "")
         ore = st.number_input(f"Ore di Lavoro {i + 1}", min_value=0, max_value=100, step=1, value=st.session_state['data'].iloc[i]['Ore di Lavoro'] if i < len(st.session_state['data']) else 0)
         giorni_liberi = []
-        for giorno in giorni_settimana:
-            if st.checkbox(f'{giorno} libero per Dipendente {i + 1}', value=giorno in st.session_state['data'].iloc[i]['Giorni Liberi'].split(',') if i < len(st.session_state['data']) else False):
-                giorni_liberi.append(giorno)
+        cols = st.columns(7)
+        for j, giorno in enumerate(giorni_settimana):
+            with cols[j]:
+                if st.checkbox(f'{giorno}', value=giorno in st.session_state['data'].iloc[i]['Giorni Liberi'].split(',') if i < len(st.session_state['data']) else False):
+                    giorni_liberi.append(giorno)
         giorni_liberi_str = ','.join(giorni_liberi)
         submit_button = st.form_submit_button(label=f'Salva Dipendente {i + 1}')
 
