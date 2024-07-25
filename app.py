@@ -8,7 +8,8 @@ class StreamlistSharing:
         self.giorni_apertura = ""
 
     def aggiungi_dipendente(self, nome, ore):
-        self.data = self.data.append({'Nome Dipendente': nome, 'Ore di Lavoro': ore}, ignore_index=True)
+        new_row = pd.DataFrame({'Nome Dipendente': [nome], 'Ore di Lavoro': [ore]})
+        self.data = pd.concat([self.data, new_row], ignore_index=True)
 
     def mostra_streamlist(self):
         st.write(self.data)
