@@ -10,6 +10,8 @@ class StreamlistSharing:
             st.session_state['orario_apertura'] = ""
         if 'giorni_apertura' not in st.session_state:
             st.session_state['giorni_apertura'] = ""
+        if 'orari_di_punta' not in st.session_state:
+            st.session_state['orari_di_punta'] = ""
         if 'scheduling' not in st.session_state:
             st.session_state['scheduling'] = None
         if 'num_dipendenti' not in st.session_state:
@@ -37,9 +39,13 @@ class StreamlistSharing:
     def imposta_giorni_apertura(self, giorni):
         st.session_state['giorni_apertura'] = giorni
 
+    def imposta_orari_di_punta(self, orari):
+        st.session_state['orari_di_punta'] = orari
+
     def mostra_info_negizio(self):
         st.write(f"Orario di apertura: {st.session_state['orario_apertura']}")
         st.write(f"Giorni di apertura: {st.session_state['giorni_apertura']}")
+        st.write(f"Orari di punta: {st.session_state['orari_di_punta']}")
 
     def crea_scheduling(self):
         # Definire i parametri di base
@@ -111,12 +117,14 @@ st.header("Imposta Orario e Giorni di Apertura")
 with st.form(key='imposta_orario_giorni'):
     orario_apertura = st.text_input("Orario di Apertura (es. 10-24)", value=st.session_state['orario_apertura'])
     giorni_apertura = st.text_input("Giorni di Apertura (es. Lun-Mar-Mer-Gio-Ven-Sab-Dom)", value=st.session_state['giorni_apertura'])
-    submit_button = st.form_submit_button(label='Imposta Orario e Giorni di Apertura')
+    orari_di_punta = st.text_input("Orari di Punta (es. 22-24)", value=st.session_state['orari_di_punta'])
+    submit_button = st.form_submit_button(label='Imposta Orario, Giorni di Apertura e Orari di Punta')
 
     if submit_button:
         streamlist.imposta_orario_apertura(orario_apertura)
         streamlist.imposta_giorni_apertura(giorni_apertura)
-        st.success("Orario e giorni di apertura impostati")
+        streamlist.imposta_orari_di_punta(orari_di_punta)
+        st.success("Orario, giorni di apertura e orari di punta impostati")
 
 # Mostra streamlist attuale
 st.header("Streamlist Attuale")
