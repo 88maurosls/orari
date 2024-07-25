@@ -13,9 +13,12 @@ class StreamlistSharing:
         if 'scheduling' not in st.session_state:
             st.session_state['scheduling'] = None
 
-    def aggiungi_dipendente(self, nome, ore, giorni_liberi):
-        new_row = pd.DataFrame({'Nome Dipendente': [nome], 'Ore di Lavoro': [ore], 'Giorni Liberi': [giorni_liberi]})
-        st.session_state['data'] = pd.concat([st.session_state['data'], new_row], ignore_index=True)
+    def aggiungi_o_aggiorna_dipendente(self, idx, nome, ore, giorni_liberi):
+        if idx < len(st.session_state['data']):
+            st.session_state['data'].loc[idx] = [nome, ore, giorni_liberi]
+        else:
+            new_row = pd.DataFrame({'Nome Dipendente': [nome], 'Ore di Lavoro': [ore], 'Giorni Liberi': [giorni_liberi]})
+            st.session_state['data'] = pd.concat([st.session_state['data'], new_row], ignore_index=True)
 
     def mostra_streamlist(self):
         st.write(st.session_state['data'])
@@ -76,29 +79,29 @@ streamlist = StreamlistSharing()
 # Interfaccia Streamlit
 st.title("Streamlist Sharing")
 
-# Form per aggiungere dipendenti
-st.header("Aggiungi Dipendenti")
+# Form per aggiungere o aggiornare dipendenti
+st.header("Aggiungi o Aggiorna Dipendenti")
 giorni_settimana = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
-for i in range(1, 9):
+for i in range(8):
     with st.form(key=f'aggiungi_dipendente_{i}'):
-        nome = st.text_input(f"Nome Dipendente {i}")
-        ore = st.number_input(f"Ore di Lavoro {i}", min_value=0, max_value=100, step=1)
+        nome = st.text_input(f"Nome Dipendente {i + 1}", value=st.session_state['data'].iloc[i]['Nome Dipendente'] if i < len(st.session_state['data']) else "")
+        ore = st.number_input(f"Ore di Lavoro {i + 1}", min_value=0, max_value=100, step=1, value=st.session_state['data'].iloc[i]['Ore di Lavoro'] if i < len(st.session_state['data']) else 0)
         giorni_liberi = []
         for giorno in giorni_settimana:
-            if st.checkbox(f'{giorno} libero per Dipendente {i}'):
+            if st.checkbox(f'{giorno} libero per Dipendente {i + 1}', value=giorno in st.session_state['data'].iloc[i]['Giorni Liberi'].split(',') if i < len(st.session_state['data']) else False):
                 giorni_liberi.append(giorno)
         giorni_liberi_str = ','.join(giorni_liberi)
-        submit_button = st.form_submit_button(label=f'Aggiungi Dipendente {i}')
+        submit_button = st.form_submit_button(label=f'Salva Dipendente {i + 1}')
 
         if submit_button and nome:
-            streamlist.aggiungi_dipendente(nome, ore, giorni_liberi_str)
-            st.success(f"Dipendente {nome} aggiunto con {ore} ore di lavoro e giorni liberi: {giorni_liberi_str}")
+            streamlist.aggiungi_o_aggiorna_dipendente(i, nome, ore, giorni_liberi_str)
+            st.success(f"Dati del dipendente {i + 1} salvati")
 
 # Form per impostare l'orario e i giorni di apertura
 st.header("Imposta Orario e Giorni di Apertura")
 with st.form(key='imposta_orario_giorni'):
-    orario_apertura = st.text_input("Orario di Apertura (es. 10-24)")
-    giorni_apertura = st.text_input("Giorni di Apertura (es. Lun-Mar-Mer-Gio-Ven-Sab-Dom)")
+    orario_apertura = st.text_input("Orario di Apertura (es. 10-24)", value=st.session_state['orario_apertura'])
+    giorni_apertura = st.text_input("Giorni di Apertura (es. Lun-Mar-Mer-Gio-Ven-Sab-Dom)", value=st.session_state['giorni_apertura'])
     submit_button = st.form_submit_button(label='Imposta Orario e Giorni di Apertura')
 
     if submit_button:
