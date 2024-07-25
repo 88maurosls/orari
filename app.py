@@ -124,7 +124,7 @@ giorni_settimana = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
 for i in range(st.session_state['num_dipendenti']):
     with st.form(key=f'aggiungi_dipendente_{i}'):
         nome = st.text_input(f"Nome Dipendente {i + 1}", key=f'nome_{i}', value=st.session_state['data'].iloc[i]['Nome Dipendente'] if i < len(st.session_state['data']) else "")
-        ore = st.number_input(f"Ore di Lavoro {i + 1}", key=f'ore_{i}', min_value=0, max_value=100, step=1, value=st.session_state['data'].iloc[i]['Ore di Lavoro'] if i < len(st.session_state['data']) else 0)
+        ore = st.number_input(f"Ore di Lavoro {i + 1}", key=f'ore_{i}', min_value=0, max_value=100, step=1, value=st.session_state['data'].iloc[i]['Ore di Lavoro'] if i < len(st.session_state['data']) else 40)
         giorni_liberi = []
         cols = st.columns(7)
         for j, giorno in enumerate(giorni_settimana):
