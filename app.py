@@ -19,7 +19,7 @@ class StreamlistSharing:
 
     def aggiungi_o_aggiorna_dipendente(self, idx, nome, ore, giorni_liberi):
         if idx < len(st.session_state['data']):
-            st.session_state['data'].loc[idx] = [nome, ore, giorni_liberi, 0]
+            st.session_state['data'].loc[idx] = [nome, ore, giorni_liberi, st.session_state['data'].loc[idx, 'Ore Extra']]
         else:
             new_row = pd.DataFrame({'Nome Dipendente': [nome], 'Ore di Lavoro': [ore], 'Giorni Liberi': [giorni_liberi], 'Ore Extra': [0]})
             st.session_state['data'] = pd.concat([st.session_state['data'], new_row], ignore_index=True)
